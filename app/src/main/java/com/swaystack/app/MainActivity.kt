@@ -13,6 +13,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var gameView: TowerGameView
     private lateinit var mainLayout: RelativeLayout
+    private lateinit var adsManager: AdsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +29,8 @@ class MainActivity : AppCompatActivity() {
         
         mainLayout.addView(gameView, gameParams)
         setContentView(mainLayout)
+        adsManager = AdsManager(this)
+        adsManager.requestConsentAndInitialize()
 
         // Activate Full-Screen Geometric Immersive Display
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

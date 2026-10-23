@@ -13,19 +13,24 @@ android {
     applicationId = "com.swaystack.app"
     minSdk = 24
     targetSdk = 35
-    versionCode = 3
-    versionName = "1.0.2-landmarks"
+    versionCode = 4
+    versionName = "1.1.0"
+    buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
+    buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
+    buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+    buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://example.com/privacy\"")
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      val props = java.util.Properties().apply { val f = rootProject.file("keystore.properties"); if (f.exists()) f.inputStream().use(::load) }
+      val keystorePath = props.getProperty("storeFile") ?: System.getenv("KEYSTORE_PATH")
+      if (keystorePath != null) storeFile = rootProject.file(keystorePath)
+      storePassword = props.getProperty("storePassword") ?: System.getenv("STORE_PASSWORD")
+      keyAlias = props.getProperty("keyAlias") ?: "upload"
+      keyPassword = props.getProperty("keyPassword") ?: System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -38,9 +43,9 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
+      isMinifyEnabled = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+      if (rootProject.file("keystore.properties").exists() || System.getenv("KEYSTORE_PATH") != null) signingConfig = signingConfigs.getByName("release")
     }
     debug {
       signingConfig = signingConfigs.getByName("debugConfig")
@@ -80,6 +85,8 @@ dependencies {
   implementation("androidx.appcompat:appcompat:1.6.1")
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
+  implementation("com.google.android.gms:play-services-ads:23.6.0")
+  implementation("com.google.android.ump:user-messaging-platform:3.1.0")
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
   testImplementation(libs.junit)

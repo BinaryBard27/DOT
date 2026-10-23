@@ -38,11 +38,13 @@ class GameEngine(context: Context, val state: GameState, val sounds: SoundManage
         state.particles.removeAll { it.alpha <= 0 }; state.particles.forEach { it.x += it.vx * dt; it.y += it.vy * dt; it.vy += .08f * dt; it.alpha -= (7 * dt).toInt() }
         if (state.blockPhase == BlockPhase.RESPAWNING) { state.respawnDelayMs -= dtMs; if (state.respawnDelayMs <= 0) state.blockPhase = BlockPhase.WAITING_FOR_TAP; return }
         if (state.blockPhase == BlockPhase.WAITING_FOR_TAP) {
-            val t = System.currentTimeMillis() - state.startTimeMillis
+            val t = System.currentTimeMillis() - state.startTimeMillis + state.inputDelayOffsetMs
             if (state.landmark != null) updateLandmarkPulse(t) else {
                 val peg = state.currentPeg()
-                val amplitude = state.screenWidth * (.18f + state.slack * .012f).coerceAtMost(.32f)
-                state.movingX = peg.x + (amplitude * sin(t * state.oscillationSpeed * (1f + state.slack * .03f))).toFloat(); state.movingY = peg.y
+                val requested = state.screenWidth * (.18f + state.slack * .012f).coerceAtMost(.32f)
+                val edgeRoom = minOf(peg.x - 8f, state.screenWidth - 8f - peg.x).coerceAtLeast(0f)
+                val amplitude = minOf(requested, edgeRoom)
+                state.movingX = (peg.x + amplitude * sin(t * state.oscillationSpeed * (1f + state.slack * .03f))).coerceIn(8f, state.screenWidth - 8f); state.movingY = peg.y
             }
         }
         if (state.landmark == null) {
@@ -93,9 +95,11 @@ class GameEngine(context: Context, val state: GameState, val sounds: SoundManage
     private fun updateLandmarkPulse(t: Long) {
         val from = state.landmarkPreviousPeg(); val to = state.landmarkTargetPeg()
         val dx = to.x - from.x; val dy = to.y - from.y; val length = sqrt(dx * dx + dy * dy).coerceAtLeast(1f)
-        val amplitude = state.screenWidth * (.18f + state.slack * .012f).coerceAtMost(.32f)
+        val requested = state.screenWidth * (.18f + state.slack * .012f).coerceAtMost(.32f)
+        val edgeRoom = minOf(to.x - 8f, state.screenWidth - 8f - to.x).coerceAtLeast(0f)
+        val amplitude = minOf(requested, edgeRoom)
         val offset = amplitude * sin(t * state.oscillationSpeed * (1f + state.slack * .03f))
-        state.movingX = to.x + dx / length * offset; state.movingY = to.y + dy / length * offset
+        state.movingX = (to.x + dx / length * offset).coerceIn(8f, state.screenWidth - 8f); state.movingY = (to.y + dy / length * offset).coerceIn(8f, state.screenHeight - 8f)
     }
 
     private fun resolveLandmarkTap() {
@@ -103,7 +107,7 @@ class GameEngine(context: Context, val state: GameState, val sounds: SoundManage
         val dx = target.x - from.x; val dy = target.y - from.y; val length = sqrt(dx * dx + dy * dy).coerceAtLeast(1f)
         val distance = abs((state.movingX - target.x) * dx / length + (state.movingY - target.y) * dy / length)
         val density = state.screenWidth / 360f
-        val perfectWindow = 20f * density; val goodWindow = maxOf(28f * density, 42f * density)
+        val perfectWindow = (20f * density * state.difficulty.perfectWindowMultiplier).coerceIn(6f * density, 20f * density); val goodWindow = maxOf(28f * density, 42f * density) * GameConstants.MAX_GOOD_WIDENING
         val type = when { distance <= perfectWindow -> ImpactType.PERFECT; distance <= goodWindow -> ImpactType.GOOD; else -> ImpactType.MISS }
         dispatch(BlockImpactEvent(type, state.movingX, state.movingY, (1f + state.slack * .1f).coerceAtMost(2f)))
         state.lastImpact = type
@@ -127,14 +131,14 @@ class GameEngine(context: Context, val state: GameState, val sounds: SoundManage
         val stroke = state.landmarkCurrentStroke()
         if (state.landmarkTargetInStroke < stroke.lastIndex) { state.landmarkTargetInStroke++; return }
         if (state.landmarkStrokeIndex >= state.landmark!!.strokes.lastIndex) { state.state = GameStateEnum.LEVEL_COMPLETE; state.landmarkRevealTimer = 0f; return }
-        state.landmarkStrokeIndex++; state.landmarkTargetInStroke = if (state.landmarkCurrentStroke().size > 1) 1 else 0; state.landmarkFrays = 3; state.landmarkLitPegs += state.landmarkCurrentStroke().first(); state.flashTimer = .4f
+        state.landmarkStrokeIndex++; state.landmarkTargetInStroke = if (state.landmarkCurrentStroke().size > 1) 1 else 0; state.landmarkFrays = state.difficulty.frays; state.landmarkLitPegs += state.landmarkCurrentStroke().first(); state.flashTimer = .4f
     }
 
     private fun restartLandmarkStroke() {
         state.segments.removeAll { it.strokeIndex == state.landmarkStrokeIndex }
         state.landmarkLitPegs.clear()
         state.segments.forEach { state.landmarkLitPegs += state.landmark!!.pegs.indexOf(it.from); state.landmarkLitPegs += state.landmark!!.pegs.indexOf(it.to) }
-        state.landmarkLitPegs += state.landmarkCurrentStroke().first(); state.landmarkTargetInStroke = if (state.landmarkCurrentStroke().size > 1) 1 else 0; state.landmarkFrays = 3; state.slack = 0f
+        state.landmarkLitPegs += state.landmarkCurrentStroke().first(); state.landmarkTargetInStroke = if (state.landmarkCurrentStroke().size > 1) 1 else 0; state.landmarkFrays = state.difficulty.frays; state.slack = 0f
     }
     private fun advanceTarget() {
         if (state.targetPegIndex >= state.completionTarget) {

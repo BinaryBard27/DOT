@@ -25,6 +25,9 @@ class GameState(var screenWidth: Float, var screenHeight: Float, assets: android
     var respawnDelayMs = 0f; var oscillationSpeed = 0.0021f
     var playMode = PlayMode.FREE_PLAY; var levelIndex = 1; var completionTarget = 0
     var perfectWindowRatio = .20f; var generatorSeed = 1L
+    var difficulty = Difficulty.MEDIUM
+    var inputDelayOffsetMs = 0
+    var animationsEnabled = true
     var pathShape = PathShape.STRAIGHT
     var landmark: LandmarkLayout? = null
     var landmarkStrokeIndex = 0
@@ -43,23 +46,31 @@ class GameState(var screenWidth: Float, var screenHeight: Float, assets: android
     fun resetRun() {
         resetRun(playMode, levelIndex, generatorSeed)
     }
-    fun resetRun(mode: PlayMode, requestedLevel: Int = 1, seed: Long = requestedLevel.toLong()) {
-        playMode = mode; levelIndex = requestedLevel.coerceAtLeast(1); generatorSeed = seed
+    fun resetRun(mode: PlayMode, requestedLevel: Int = 1, seed: Long = requestedLevel.toLong(), selectedDifficulty: Difficulty? = null) {
+        playMode = mode; levelIndex = requestedLevel.coerceIn(1, LevelCatalog.MIN_PLAYABLE_LEVELS); generatorSeed = seed
+        difficulty = selectedDifficulty ?: Difficulty.MEDIUM
         state = GameStateEnum.PLAYING; score = 0; lives = 3; multiplier = 1; currentComboStreak = 0; highestComboStreak = 0
         targetPegIndex = 0; slack = 0f; cameraXOffset = 0f; cameraYOffset = 0f; segments.clear(); particles.clear(); floatingTexts.clear(); pegs.clear(); deadPegs.clear()
         landmark = null; landmarkStrokeIndex = 0; landmarkTargetInStroke = 0; landmarkFrays = 3; landmarkRevealTimer = 0f; landmarkRevealSweep = 0f; landmarkLitPegs.clear()
         generator = LevelGenerator(screenWidth, screenHeight)
-        if (mode == PlayMode.CONSTELLATION_PATH && levelIndex in 1..3 && landmarkAssets != null) {
+        if (mode == PlayMode.CONSTELLATION_PATH && landmarkAssets != null) {
             val definitions = LandmarkRepository.load(landmarkAssets!!)
-            val definition = definitions[levelIndex - 1]
+            val slot = LevelCatalog.landmarkSlot(levelIndex, definitions.size)
+            if (slot == null) {
+                error("Constellation Path level $levelIndex is unavailable; valid levels are 1..${LevelCatalog.LANDMARK_LEVELS}")
+            }
+            difficulty = selectedDifficulty ?: slot.difficulty
+            val definition = definitions[slot.definitionIndex]
             require(LandmarkRepository.validate(definition).isEmpty()) { LandmarkRepository.validate(definition).joinToString() }
             landmark = LandmarkRepository.layout(definition, screenWidth, screenHeight)
             pegs.addAll(landmark!!.pegs)
             landmarkLitPegs += landmark!!.strokes.first().first()
             landmarkTargetInStroke = if (landmark!!.strokes.first().size > 1) 1 else 0
             completionTarget = landmark!!.strokes.sumOf { (it.size - 1).coerceAtLeast(0) }
-            oscillationSpeed = .0021f * (1f + ((levelIndex - 16).coerceAtLeast(0) * .027f))
-            perfectWindowRatio = (0.20f - (levelIndex - 1) * (0.12f / 29f)).coerceIn(.06f, .20f)
+            val baseSpeed = .0021f * (1f + ((levelIndex - 16).coerceAtLeast(0) * .027f))
+            oscillationSpeed = baseSpeed * difficulty.speedMultiplier
+            perfectWindowRatio = ((0.20f - (levelIndex - 1) * (0.12f / 29f)) * difficulty.perfectWindowMultiplier).coerceIn(GameConstants.PERFECT_MIN, GameConstants.PERFECT_MAX)
+            landmarkFrays = difficulty.frays
             movingX = pegs.first().x; movingY = pegs.first().y
             startTimeMillis = System.currentTimeMillis(); blockPhase = BlockPhase.WAITING_FOR_TAP; lastImpact = null; gameOverAlpha = 0f
             return

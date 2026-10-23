@@ -72,15 +72,15 @@ class GameRenderer {
     private fun drawLandmark(c: Canvas, s: GameState) {
         val layout = s.landmark ?: return
         if (s.debugShowAllPegs) layout.pegs.forEachIndexed { i, p -> drawDebugPeg(c, p, i) }
-        else s.landmarkLitPegs.forEach { index -> if (index in layout.pegs.indices) drawPeg(c, layout.pegs[index], true) }
+        else s.landmarkLitPegs.forEach { index -> if (index in layout.pegs.indices) drawPeg(c, layout.pegs[index], true, landmark = true) }
         if (s.state == GameStateEnum.PLAYING) {
             val targetIndex = s.landmarkCurrentStroke().getOrNull(s.landmarkTargetInStroke)
-            if (targetIndex != null) drawPeg(c, layout.pegs[targetIndex], false)
+            if (targetIndex != null) drawPeg(c, layout.pegs[targetIndex], false, landmark = true)
             drawPulse(c, s.movingX, s.movingY)
         }
         if (s.state == GameStateEnum.LEVEL_COMPLETE) {
             val alpha = (150 + 105 * s.landmarkRevealSweep).toInt().coerceIn(0, 255)
-            layout.pegs.forEach { fill.color = Color.BLACK; fill.alpha = alpha; c.drawCircle(it.x, it.y, 23f, fill) }
+            layout.pegs.forEach { fill.color = Color.BLACK; fill.alpha = alpha; c.drawCircle(it.x, it.y, GameConstants.LANDMARK_ACTIVE_PEG_RADIUS_DP, fill) }
             if (s.landmarkRevealSweep > 0f) drawRevealSweep(c, s, alpha)
         }
     }
@@ -92,7 +92,7 @@ class GameRenderer {
         line.alpha = 255
     }
     private fun drawDebugPeg(c: Canvas, p: Peg, index: Int) { line.color = Color.BLACK; line.strokeWidth = 3f; c.drawCircle(p.x, p.y, 18f, line); text.color = Color.BLACK; text.textSize = 14f; text.textAlign = Paint.Align.CENTER; c.drawText(index.toString(), p.x, p.y + 5f, text); text.textAlign = Paint.Align.LEFT }
-    private fun drawPeg(c: Canvas, p: Peg, locked: Boolean) { if (locked) { fill.color = Color.BLACK; fill.alpha = 255; c.drawCircle(p.x, p.y, 23f, fill) } else { line.color = Color.rgb(190, 190, 190); line.strokeWidth = 3f; c.drawCircle(p.x, p.y, 18f, line) } }
+    private fun drawPeg(c: Canvas, p: Peg, locked: Boolean, landmark: Boolean = false) { if (locked) { fill.color = Color.BLACK; fill.alpha = 255; c.drawCircle(p.x, p.y, if (landmark) GameConstants.LANDMARK_ACTIVE_PEG_RADIUS_DP else GameConstants.FREE_ACTIVE_PEG_RADIUS_DP, fill) } else { line.color = Color.rgb(190, 190, 190); line.strokeWidth = 3f; c.drawCircle(p.x, p.y, if (landmark) GameConstants.LANDMARK_INACTIVE_PEG_RADIUS_DP else GameConstants.FREE_INACTIVE_PEG_RADIUS_DP, line) } }
     private fun drawDeadPeg(c: Canvas, p: Peg) { line.color = Color.rgb(205, 205, 205); line.strokeWidth = 3f; line.pathEffect = DashPathEffect(floatArrayOf(5f, 6f), 0f); c.drawCircle(p.x, p.y, 17f, line); line.pathEffect = null }
     private fun drawPulse(c: Canvas, x: Float, y: Float) { fill.color = Color.BLACK; fill.alpha = 255; c.drawCircle(x, y, 25f, fill) }
     private fun drawPerfectFlash(c: Canvas, peg: Peg, timer: Float) { line.color = Color.WHITE; line.strokeWidth = 4f; line.alpha = (timer * 255).toInt().coerceIn(0, 255); c.drawCircle(peg.x, peg.y, 23f + (1f - timer) * 18f, line); line.alpha = 255 }

@@ -14,7 +14,7 @@ class LandmarkTest {
     @Test fun `three landmark structures are valid and solvable`() {
         val text = File("src/main/assets/landmarks.json").readText()
         val root = org.json.JSONArray(text)
-        assertTrue(root.length() == 3)
+        assertTrue(root.length() == 13)
         for (i in 0 until root.length()) {
             val obj = root.getJSONObject(i)
             val points = obj.getJSONArray("pegs")
@@ -61,8 +61,7 @@ class LandmarkTest {
         val json = org.json.JSONArray(File("src/main/assets/landmarks.json").readText())
         val screenWidth = 360f
         val screenHeight = 800f
-        val pegRadius = 23f // Locked peg radius in GameRenderer (unlocked peg radius is 18f)
-        val minDistance = 2 * pegRadius + 8f // 54 dp
+        val minDistance = com.swaystack.app.game.GameConstants.MIN_LANDMARK_PEG_DISTANCE_DP
 
         val failures = mutableListOf<String>()
 
