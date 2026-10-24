@@ -22,7 +22,7 @@ class AdsManager(private val activity: Activity) {
     }
 
     private fun loadAdsIfAllowed(info: ConsentInformation) {
-        if (!info.canRequestAds) return
+        if (!info.canRequestAds()) return
         MobileAds.initialize(activity) { initialized = true }
         RewardedAd.load(activity, BuildConfig.ADMOB_REWARDED_ID, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
             override fun onAdLoaded(ad: RewardedAd) { rewarded = ad }
