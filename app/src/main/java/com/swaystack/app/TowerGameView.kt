@@ -22,12 +22,17 @@ class TowerGameView(context: Context) : SurfaceView(context), SurfaceHolder.Call
     private val gameRenderer = GameRenderer()
 
     private val prefs = context.getSharedPreferences("TautPrefs", Context.MODE_PRIVATE)
+    private val settings = SettingsStore(context)
     private val gameEngine = GameEngine(context, gameState, soundManager, prefs)
 
     init {
         surfaceHolder.addCallback(this)
         isFocusable = true
         gameState.highScore = prefs.getInt("high_score", 0)
+        gameState.inputDelayOffsetMs = settings.inputDelayOffsetMs
+        gameState.vibrationEnabled = settings.vibrationEnabled
+        gameState.soundEnabled = settings.soundEnabled
+        soundManager.enabled = settings.soundEnabled
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {

@@ -17,6 +17,10 @@
         android:theme="@style/Theme.SwayStack">
         <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="@string/admob_app_id" />
         <activity
+            android:name="com.swaystack.app.SettingsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
             android:name="com.swaystack.app.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
