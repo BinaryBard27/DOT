@@ -1,7 +1,9 @@
 package com.swaystack.app
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Canvas
+import android.graphics.Bitmap
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -86,6 +88,13 @@ class TowerGameView(context: Context) : SurfaceView(context), SurfaceHolder.Call
     /** Debug-only inspection hook: reveal every landmark peg and its data index. */
     fun setLandmarkDebugVisible(visible: Boolean) { gameState.debugShowAllPegs = visible }
 
+    fun shareCurrentLandmark() {
+        if (gameState.landmark == null || gameState.landmarkRevealSweep < 1f) return
+        val bitmap = Bitmap.createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+        gameRenderer.draw(Canvas(bitmap), gameState, 0f)
+        context.startActivity(Intent.createChooser(ShareHelper.createShareIntent(context, bitmap, gameState.landmark!!.definition.id), "Share landmark"))
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         // Only handle the primary pointer; ignore all secondary touch contacts so
         // accidental multi-touch during a run doesn't double-fire inputs.
@@ -94,6 +103,10 @@ class TowerGameView(context: Context) : SurfaceView(context), SurfaceHolder.Call
                 if (event.y in height * .43f..height * .52f) startFreePlay()
                 else if (event.y in height * .56f..height * .65f) startConstellationLevel(1)
                 else if (event.y in height * .68f..height * .76f) startDailyChallenge(DailyChallenge.localDayIndex())
+                return true
+            }
+            if (gameState.state == GameStateEnum.LEVEL_COMPLETE && gameState.landmark != null && event.y >= height * .84f && event.y <= height * .94f) {
+                if (event.x < width * .5f) shareCurrentLandmark() else gameEngine.handleInput()
                 return true
             }
             // Guard: don't route taps into gameplay during non-interactive states.

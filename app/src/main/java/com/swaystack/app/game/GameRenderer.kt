@@ -36,8 +36,10 @@ class GameRenderer {
         if (s.state == GameStateEnum.LEVEL_COMPLETE && s.landmark != null) {
             text.textAlign = Paint.Align.CENTER; text.color = Color.BLACK; text.textSize = 28f
             c.drawText(s.landmark!!.definition.name, s.screenWidth / 2f, s.landmark!!.pegs.maxOf { it.y } + 58f, text)
-            line.color = Color.BLACK; line.strokeWidth = 2f; panelRect.set(s.screenWidth * .30f, s.screenHeight * .84f, s.screenWidth * .70f, s.screenHeight * .92f); c.drawRoundRect(panelRect, 14f, 14f, line)
-            text.textSize = 22f; c.drawText("NEXT", s.screenWidth / 2f, s.screenHeight * .895f, text); text.textAlign = Paint.Align.LEFT
+            line.color = Color.BLACK; line.strokeWidth = 2f
+            panelRect.set(s.screenWidth * .12f, s.screenHeight * .84f, s.screenWidth * .46f, s.screenHeight * .92f); c.drawRoundRect(panelRect, 14f, 14f, line)
+            panelRect.set(s.screenWidth * .54f, s.screenHeight * .84f, s.screenWidth * .88f, s.screenHeight * .92f); c.drawRoundRect(panelRect, 14f, 14f, line)
+            text.textSize = 20f; c.drawText("SHARE", s.screenWidth * .29f, s.screenHeight * .895f, text); c.drawText("NEXT", s.screenWidth * .71f, s.screenHeight * .895f, text); text.textAlign = Paint.Align.LEFT
         }
         if (s.state == GameStateEnum.GAME_OVER || (s.state == GameStateEnum.LEVEL_COMPLETE && s.landmark == null)) {
             fill.color = Color.WHITE; fill.alpha = 245; c.drawRect(0f, 0f, s.screenWidth, s.screenHeight, fill)
