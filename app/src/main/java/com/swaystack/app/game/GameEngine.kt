@@ -128,7 +128,10 @@ class GameEngine(context: Context, val state: GameState, val sounds: SoundManage
     private fun advanceLandmarkTarget() {
         val stroke = state.landmarkCurrentStroke()
         if (state.landmarkTargetInStroke < stroke.lastIndex) { state.landmarkTargetInStroke++; return }
-        if (state.landmarkStrokeIndex >= state.landmark!!.strokes.lastIndex) { state.state = GameStateEnum.LEVEL_COMPLETE; state.landmarkRevealTimer = 0f; return }
+        if (state.landmarkStrokeIndex >= state.landmark!!.strokes.lastIndex) {
+            state.dailyDay?.let { com.swaystack.app.DailyProgress.recordCompletion(prefs, it); state.dailyStreak = com.swaystack.app.DailyProgress.currentStreak(prefs) }
+            state.state = GameStateEnum.LEVEL_COMPLETE; state.landmarkRevealTimer = 0f; return
+        }
         state.landmarkStrokeIndex++; state.landmarkTargetInStroke = if (state.landmarkCurrentStroke().size > 1) 1 else 0; state.landmarkFrays = state.difficulty.frays; state.landmarkLitPegs += state.landmarkCurrentStroke().first(); state.flashTimer = .4f
     }
 

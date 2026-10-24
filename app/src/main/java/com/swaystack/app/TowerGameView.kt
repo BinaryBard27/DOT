@@ -33,6 +33,7 @@ class TowerGameView(context: Context) : SurfaceView(context), SurfaceHolder.Call
         gameState.vibrationEnabled = settings.vibrationEnabled
         gameState.soundEnabled = settings.soundEnabled
         soundManager.enabled = settings.soundEnabled
+        gameState.dailyStreak = DailyProgress.currentStreak(prefs)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
@@ -79,7 +80,7 @@ class TowerGameView(context: Context) : SurfaceView(context), SurfaceHolder.Call
     fun startFreePlay() { gameState.resetRun(PlayMode.FREE_PLAY, 1, 1L) }
 
     fun startDailyChallenge(dayNumber: Long) {
-        gameState.resetRun(com.swaystack.app.game.PlayMode.DAILY_CHALLENGE, 1, dayNumber)
+        gameState.resetDailyChallenge(dayNumber)
     }
 
     /** Debug-only inspection hook: reveal every landmark peg and its data index. */
@@ -92,6 +93,7 @@ class TowerGameView(context: Context) : SurfaceView(context), SurfaceHolder.Call
             if (gameState.state == GameStateEnum.HOME) {
                 if (event.y in height * .43f..height * .52f) startFreePlay()
                 else if (event.y in height * .56f..height * .65f) startConstellationLevel(1)
+                else if (event.y in height * .68f..height * .76f) startDailyChallenge(DailyChallenge.localDayIndex())
                 return true
             }
             // Guard: don't route taps into gameplay during non-interactive states.

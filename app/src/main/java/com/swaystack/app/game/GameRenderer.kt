@@ -51,6 +51,8 @@ class GameRenderer {
         c.drawText("TAUT", s.screenWidth / 2f, s.screenHeight * .25f, text)
         text.textSize = 18f; text.color = Color.DKGRAY
         c.drawText("TAP TO TUNE THE STRING", s.screenWidth / 2f, s.screenHeight * .31f, text)
+        text.textSize = 16f; text.color = Color.DKGRAY
+        c.drawText("DAILY STREAK ${s.dailyStreak}", s.screenWidth / 2f, s.screenHeight * .36f, text)
         fill.color = Color.WHITE; fill.alpha = 255
         line.color = Color.BLACK; line.strokeWidth = 2f
         val free = RectF(s.screenWidth * .12f, s.screenHeight * .43f, s.screenWidth * .88f, s.screenHeight * .52f)
@@ -60,6 +62,8 @@ class GameRenderer {
         text.color = Color.BLACK; text.textSize = 24f
         c.drawText("FREE PLAY", s.screenWidth / 2f, s.screenHeight * .485f, text)
         c.drawText("CONSTELLATION PATH", s.screenWidth / 2f, s.screenHeight * .605f, text)
+        text.textSize = 20f
+        c.drawText("DAILY CHALLENGE", s.screenWidth / 2f, s.screenHeight * .725f, text)
         text.textAlign = Paint.Align.LEFT
     }
 

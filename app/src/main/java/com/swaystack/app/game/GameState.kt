@@ -28,6 +28,8 @@ class GameState(var screenWidth: Float, var screenHeight: Float, assets: android
     var difficulty = Difficulty.MEDIUM
     var inputDelayOffsetMs = 0
     var animationsEnabled = true
+    var dailyDay: Long? = null
+    var dailyStreak = 0
     var pathShape = PathShape.STRAIGHT
     var landmark: LandmarkLayout? = null
     var landmarkStrokeIndex = 0
@@ -49,6 +51,7 @@ class GameState(var screenWidth: Float, var screenHeight: Float, assets: android
     fun resetRun(mode: PlayMode, requestedLevel: Int = 1, seed: Long = requestedLevel.toLong(), selectedDifficulty: Difficulty? = null) {
         playMode = mode; levelIndex = requestedLevel.coerceIn(1, LevelCatalog.MIN_PLAYABLE_LEVELS); generatorSeed = seed
         difficulty = selectedDifficulty ?: Difficulty.MEDIUM
+        dailyDay = null
         state = GameStateEnum.PLAYING; score = 0; lives = 3; multiplier = 1; currentComboStreak = 0; highestComboStreak = 0
         targetPegIndex = 0; slack = 0f; cameraXOffset = 0f; cameraYOffset = 0f; segments.clear(); particles.clear(); floatingTexts.clear(); pegs.clear(); deadPegs.clear()
         landmark = null; landmarkStrokeIndex = 0; landmarkTargetInStroke = 0; landmarkFrays = 3; landmarkRevealTimer = 0f; landmarkRevealSweep = 0f; landmarkLitPegs.clear()
@@ -78,6 +81,12 @@ class GameState(var screenWidth: Float, var screenHeight: Float, assets: android
         val generated = if (mode == PlayMode.DAILY_CHALLENGE) generator!!.generateDaily(seed) else generator!!.generate(levelIndex, seed)
         pegs.addAll(generated.pegs); deadPegs.addAll(generated.deadPegs); completionTarget = pegs.lastIndex; oscillationSpeed = generated.oscillationSpeed; perfectWindowRatio = generated.perfectWindowRatio; pathShape = generated.pathShape
         movingY = pegs.first().y; movingX = pegs.first().x; startTimeMillis = System.currentTimeMillis(); blockPhase = BlockPhase.WAITING_FOR_TAP; lastImpact = null; gameOverAlpha = 0f
+    }
+    fun resetDailyChallenge(dayIndex: Long) {
+        val definitions = LandmarkRepository.load(landmarkAssets ?: error("Landmark assets unavailable"))
+        resetRun(PlayMode.CONSTELLATION_PATH, com.swaystack.app.DailyChallenge.mediumLevel(dayIndex, definitions.size), dayIndex, Difficulty.MEDIUM)
+        playMode = PlayMode.DAILY_CHALLENGE
+        dailyDay = dayIndex
     }
     fun appendFreePlayChunk(): Int {
         val next = (generator ?: LevelGenerator(screenWidth, screenHeight)).generate(levelIndex + 1, generatorSeed + pegs.size)
