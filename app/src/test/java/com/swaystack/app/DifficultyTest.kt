@@ -2,6 +2,7 @@ package com.swaystack.app
 
 import com.swaystack.app.game.Difficulty
 import com.swaystack.app.game.Progression
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -11,6 +12,9 @@ class DifficultyTest {
         assertTrue(Difficulty.MEDIUM.speedMultiplier < Difficulty.HARD.speedMultiplier)
         assertTrue(Difficulty.EASY.perfectWindowMultiplier > Difficulty.MEDIUM.perfectWindowMultiplier)
         assertTrue(Difficulty.MEDIUM.perfectWindowMultiplier > Difficulty.HARD.perfectWindowMultiplier)
+        assertEquals(3, Difficulty.EASY.frays)
+        assertEquals(3, Difficulty.MEDIUM.frays)
+        assertEquals(2, Difficulty.HARD.frays)
     }
 
     @Test fun `landmark unlocks follow easy medium hard chain`() {
