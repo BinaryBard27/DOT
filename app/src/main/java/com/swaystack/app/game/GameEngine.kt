@@ -42,9 +42,8 @@ class GameEngine(context: Context, val state: GameState, val sounds: SoundManage
             if (state.landmark != null) updateLandmarkPulse(t) else {
                 val peg = state.currentPeg()
                 val requested = state.screenWidth * (.18f + state.slack * .012f).coerceAtMost(.32f)
-                val edgeRoom = minOf(peg.x - 8f, state.screenWidth - 8f - peg.x).coerceAtLeast(0f)
-                val amplitude = minOf(requested, edgeRoom)
-                state.movingX = (peg.x + amplitude * sin(t * state.oscillationSpeed * (1f + state.slack * .03f))).coerceIn(8f, state.screenWidth - 8f); state.movingY = peg.y
+                val amplitude = MotionBounds.safeAmplitude(peg.x, state.screenWidth, requested)
+                state.movingX = MotionBounds.clampX(peg.x + amplitude * sin(t * state.oscillationSpeed * (1f + state.slack * .03f)), state.screenWidth); state.movingY = peg.y
             }
         }
         if (state.landmark == null) {
@@ -96,10 +95,9 @@ class GameEngine(context: Context, val state: GameState, val sounds: SoundManage
         val from = state.landmarkPreviousPeg(); val to = state.landmarkTargetPeg()
         val dx = to.x - from.x; val dy = to.y - from.y; val length = sqrt(dx * dx + dy * dy).coerceAtLeast(1f)
         val requested = state.screenWidth * (.18f + state.slack * .012f).coerceAtMost(.32f)
-        val edgeRoom = minOf(to.x - 8f, state.screenWidth - 8f - to.x).coerceAtLeast(0f)
-        val amplitude = minOf(requested, edgeRoom)
+        val amplitude = MotionBounds.safeAmplitude(to.x, state.screenWidth, requested)
         val offset = amplitude * sin(t * state.oscillationSpeed * (1f + state.slack * .03f))
-        state.movingX = (to.x + dx / length * offset).coerceIn(8f, state.screenWidth - 8f); state.movingY = (to.y + dy / length * offset).coerceIn(8f, state.screenHeight - 8f)
+        state.movingX = MotionBounds.clampX(to.x + dx / length * offset, state.screenWidth); state.movingY = MotionBounds.clampY(to.y + dy / length * offset, state.screenHeight)
     }
 
     private fun resolveLandmarkTap() {
