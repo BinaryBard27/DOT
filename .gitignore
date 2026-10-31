@@ -37,3 +37,4 @@ keystore.properties
 # IDE
 .idea/
 *.iml
+test.log
